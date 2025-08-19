@@ -30,7 +30,7 @@
     "tailwindcss": "^3.3.5"
   },
   "scripts": {
-    "start": "react-scripts start",
+    "start": "react-scripts start --host 0.0.0.0",
     "kill-start": "sudo kill -9 `sudo lsof -t -i:3000` && yarn start",
     "build": "react-scripts build",
     "test": "react-scripts test",
