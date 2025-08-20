@@ -1,8 +1,8 @@
 {
-  "name": "react-sdk-example",
+  "name": "IMS-Video",
   "version": "0.1.0",
   "private": true,
-  "homepage": ".",
+  "homepage": "https://deployvalley.com",
   
   "dependencies": {
     "@headlessui/react": "^1.7.17",
