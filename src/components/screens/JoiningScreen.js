@@ -31,6 +31,9 @@ export function JoiningScreen({
   customAudioStream,
   setCustomAudioStream,
   setCustomVideoStream,
+  initialMeetingId,
+  startMeeting,
+  isAdmin,
 }) {
   const {
     selectedWebcam,
@@ -98,27 +101,41 @@ export function JoiningScreen({
     if (webcamOn) {
       videoTrackRef.current = videoTrack;
 
-      var isPlaying =
-        videoPlayerRef.current.currentTime > 0 &&
-        !videoPlayerRef.current.paused &&
-        !videoPlayerRef.current.ended &&
-        videoPlayerRef.current.readyState >
-          videoPlayerRef.current.HAVE_CURRENT_DATA;
+      var isPlaying = false;
+      try {
+        isPlaying =
+          videoPlayerRef.current &&
+          videoPlayerRef.current.currentTime > 0 &&
+          !videoPlayerRef.current.paused &&
+          !videoPlayerRef.current.ended &&
+          videoPlayerRef.current.readyState >
+            videoPlayerRef.current.HAVE_CURRENT_DATA;
+      } catch (error) {
+        console.log("Error checking video playing state:", error);
+      }
 
       if (videoTrack) {
         const videoSrcObject = new MediaStream([videoTrack]);
 
         if (videoPlayerRef.current) {
-          videoPlayerRef.current.srcObject = videoSrcObject;
-          if (videoPlayerRef.current.pause && !isPlaying) {
-            videoPlayerRef.current
-              .play()
-              .catch((error) => console.log("error", error));
+          try {
+            videoPlayerRef.current.srcObject = videoSrcObject;
+            if (videoPlayerRef.current.play && !isPlaying) {
+              videoPlayerRef.current
+                .play()
+                .catch((error) => console.log("Video play error:", error));
+            }
+          } catch (error) {
+            console.log("Error setting video source:", error);
           }
         }
       } else {
         if (videoPlayerRef.current) {
-          videoPlayerRef.current.srcObject = null;
+          try {
+            videoPlayerRef.current.srcObject = null;
+          } catch (error) {
+            console.log("Error clearing video source:", error);
+          }
         }
       }
     }
@@ -136,6 +153,30 @@ export function JoiningScreen({
     checkMediaPermission();
     return () => {};
   }, []);
+
+  useEffect(() => {
+    const tryAutoJoin = async () => {
+      try {
+        if (initialMeetingId && !startMeeting) {
+          const token = await getToken();
+          const { meetingId, err } = await validateMeeting({
+            roomId: initialMeetingId,
+            token,
+          });
+          if (meetingId === initialMeetingId) {
+            setToken(token);
+            setMeetingId(initialMeetingId);
+            onClickStartMeeting();
+          } else {
+            console.log("Auto-join failed:", err);
+          }
+        }
+      } catch (e) {
+        console.log("Auto-join error", e);
+      }
+    };
+    tryAutoJoin();
+  }, [initialMeetingId, startMeeting]);
 
   const _toggleWebcam = () => {
     const videoTrack = videoTrackRef.current;
@@ -444,6 +485,7 @@ export function JoiningScreen({
                     videoTrack={videoTrack}
                     setVideoTrack={setVideoTrack}
                     onClickStartMeeting={onClickStartMeeting}
+                    isAdmin={isAdmin}
                     onClickJoin={async (id) => {
                       const token = await getToken();
                       const { meetingId, err } = await validateMeeting({
@@ -453,6 +495,11 @@ export function JoiningScreen({
                       if (meetingId === id) {
                         setToken(token);
                         setMeetingId(id);
+                        try {
+                          const url = new URL(window.location.href);
+                          url.searchParams.set("roomId", id);
+                          window.history.replaceState({}, "", url);
+                        } catch (e) {}
                         onClickStartMeeting();
                       } else {
                         toast(`${err}`, {
@@ -474,6 +521,11 @@ export function JoiningScreen({
                       if (meetingId) {
                         setToken(token);
                         setMeetingId(meetingId);
+                        try {
+                          const url = new URL(window.location.href);
+                          url.searchParams.set("roomId", meetingId);
+                          window.history.replaceState({}, "", url);
+                        } catch (e) {}
                       }
                       return { meetingId: meetingId, err: err };
                     }}

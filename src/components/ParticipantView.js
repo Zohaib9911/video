@@ -13,6 +13,8 @@ import SpeakerIcon from "../icons/SpeakerIcon";
 import { getQualityScore, nameTructed } from "../utils/common";
 import * as ReactDOM from "react-dom";
 import { useMeetingAppContext } from "../MeetingAppContextDef";
+import { toast } from "react-toastify";
+import { usePubSub } from "@videosdk.live/react-sdk";
 
 export const CornerDisplayName = ({
   participantId,
@@ -411,7 +413,7 @@ export const CornerDisplayName = ({
   );
 };
 
-export function ParticipantView({ participantId }) {
+export function ParticipantView({ participantId, isAdmin }) {
   const {
     displayName,
     webcamStream,
@@ -422,8 +424,10 @@ export function ParticipantView({ participantId }) {
     mode,
     isActiveSpeaker,
   } = useParticipant(participantId);
+  const { enableMic, disableMic } = useParticipant(participantId);
+  const { publish } = usePubSub("ADMIN_MIC_CONTROL");
 
-  const {selectedSpeaker} = useMeetingAppContext();
+  const { selectedSpeaker } = useMeetingAppContext();
   const micRef = useRef(null);
   const [mouseOver, setMouseOver] = useState(false);
 
@@ -433,10 +437,14 @@ export function ParticipantView({ participantId }) {
         const mediaStream = new MediaStream();
         mediaStream.addTrack(micStream.track);
         micRef.current.srcObject = mediaStream;
-        try{
-          micRef.current.setSinkId(selectedSpeaker.id);
-        }catch(err){
-          console.log("Setting speaker device failed", err);
+        if (selectedSpeaker?.id && micRef.current.setSinkId) {
+          try {
+            micRef.current.setSinkId(selectedSpeaker.id).catch((err) => {
+              console.log("Setting speaker device failed", err);
+            });
+          } catch (err) {
+            console.log("Setting speaker device failed", err);
+          }
         }
         micRef.current
           .play()
@@ -447,8 +455,8 @@ export function ParticipantView({ participantId }) {
         micRef.current.srcObject = null;
       }
     }
-  }, [micStream, micOn,selectedSpeaker]);
-  
+  }, [micStream, micOn, selectedSpeaker]);
+
   const webcamMediaStream = useMemo(() => {
     if (webcamOn && webcamStream) {
       const mediaStream = new MediaStream();
@@ -510,6 +518,56 @@ export function ParticipantView({ participantId }) {
           isActiveSpeaker,
         }}
       />
+      {isAdmin && !isLocal ? (
+        <div className="absolute bottom-2 right-2 flex space-x-2">
+          <button
+            className="px-2 py-1 text-xs rounded bg-white text-black"
+            onClick={(e) => {
+              e.stopPropagation();
+              disableMic();
+              publish({
+                action: "mute",
+                targetId: participantId,
+              });
+              toast(`${displayName} has been muted by admin`, {
+                position: "bottom-left",
+                autoClose: 3000,
+                hideProgressBar: true,
+                closeButton: false,
+                pauseOnHover: true,
+                draggable: true,
+                progress: undefined,
+                theme: "light",
+              });
+            }}
+          >
+            Mute
+          </button>
+          <button
+            className="px-2 py-1 text-xs rounded bg-white text-black"
+            onClick={(e) => {
+              e.stopPropagation();
+              enableMic();
+              publish({
+                action: "unmute",
+                targetId: participantId,
+              });
+              toast(`${displayName} has been unmuted by admin`, {
+                position: "bottom-left",
+                autoClose: 3000,
+                hideProgressBar: true,
+                closeButton: false,
+                pauseOnHover: true,
+                draggable: true,
+                progress: undefined,
+                theme: "light",
+              });
+            }}
+          >
+            Unmute
+          </button>
+        </div>
+      ) : null}
     </div>
   ) : null;
 }

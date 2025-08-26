@@ -8,6 +8,7 @@ export function MeetingDetailsScreen({
   participantName,
   setParticipantName,
   onClickStartMeeting,
+  isAdmin,
 }) {
   const [meetingId, setMeetingId] = useState("");
   const [meetingIdError, setMeetingIdError] = useState(false);
@@ -71,8 +72,9 @@ export function MeetingDetailsScreen({
           </p> */}
           <button
             disabled={participantName.length < 3}
-            className={`w-full ${participantName.length < 3 ? "bg-gray-650" : "bg-purple-350"
-              }  text-white px-2 py-3 rounded-xl mt-5`}
+            className={`w-full ${
+              participantName.length < 3 ? "bg-gray-650" : "bg-purple-350"
+            }  text-white px-2 py-3 rounded-xl mt-5`}
             onClick={(e) => {
               if (iscreateMeetingClicked) {
                 onClickStartMeeting();
@@ -91,18 +93,17 @@ export function MeetingDetailsScreen({
       {!iscreateMeetingClicked && !isJoinMeetingClicked && (
         <div className="w-full md:mt-0 mt-4 flex flex-col">
           <div className="flex items-center justify-center flex-col w-full ">
-            <button
-              className="w-full bg-purple-350 text-white px-2 py-3 rounded-xl"
-              onClick={async (e) => {
-                const { meetingId, err } = await _handleOnCreateMeeting();
-              
-                if (meetingId) {
-                  setMeetingId(meetingId);
-                  setIscreateMeetingClicked(true);
-                } else {
-                  toast(
-                    `${err}`,
-                    {
+            {isAdmin ? (
+              <button
+                className="w-full bg-purple-350 text-white px-2 py-3 rounded-xl"
+                onClick={async (e) => {
+                  const { meetingId, err } = await _handleOnCreateMeeting();
+
+                  if (meetingId) {
+                    setMeetingId(meetingId);
+                    setIscreateMeetingClicked(true);
+                  } else {
+                    toast(`${err}`, {
                       position: "bottom-left",
                       autoClose: 4000,
                       hideProgressBar: true,
@@ -111,13 +112,17 @@ export function MeetingDetailsScreen({
                       draggable: true,
                       progress: undefined,
                       theme: "light",
-                    }
-                  );
-                }
-              }}
-            >
-              Create a meeting
-            </button>
+                    });
+                  }
+                }}
+              >
+                Create a meeting
+              </button>
+            ) : (
+              <div className="w-full bg-gray-600 text-gray-400 px-2 py-3 rounded-xl text-center">
+                Only admins can create meetings
+              </div>
+            )}
             <button
               className="w-full bg-gray-650 text-white px-2 py-3 rounded-xl mt-5"
               onClick={(e) => {

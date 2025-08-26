@@ -9,7 +9,7 @@ const MemoizedParticipant = React.memo(
   }
 );
 
-function ParticipantGrid({ participantIds, isPresenting }) {
+function ParticipantGrid({ participantIds, isPresenting, isAdmin }) {
   const { sideBarMode } = useMeetingAppContext();
   const isMobile = window.matchMedia(
     "only screen and (max-width: 768px)"
@@ -83,7 +83,10 @@ function ParticipantGrid({ participantIds, isPresenting }) {
                             : "md:max-w-lg 2xl:max-w-2xl"
                         } overflow-clip overflow-hidden  p-1`}
                       >
-                        <MemoizedParticipant participantId={participantId} />
+                        <MemoizedParticipant
+                          participantId={participantId}
+                          isAdmin={isAdmin}
+                        />
                       </div>
                     );
                   })}

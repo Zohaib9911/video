@@ -41,20 +41,32 @@ export function PresenterView({ height }) {
       screenShareOn &&
       screenShareAudioStream
     ) {
-      const mediaStream = new MediaStream();
-      mediaStream.addTrack(screenShareAudioStream.track);
+      try {
+        const mediaStream = new MediaStream();
+        mediaStream.addTrack(screenShareAudioStream.track);
 
-      audioPlayer.current.srcObject = mediaStream;
-      audioPlayer.current.play().catch((err) => {
-        if (
-          err.message ===
-          "play() failed because the user didn't interact with the document first. https://goo.gl/xX8pDD"
-        ) {
-          console.error("audio" + err.message);
-        }
-      });
+        audioPlayer.current.srcObject = mediaStream;
+        audioPlayer.current.play().catch((err) => {
+          if (
+            err.message ===
+            "play() failed because the user didn't interact with the document first. https://goo.gl/xX8pDD"
+          ) {
+            console.error("audio" + err.message);
+          } else {
+            console.error("Audio play error:", err);
+          }
+        });
+      } catch (error) {
+        console.error("Error setting up screen share audio:", error);
+      }
     } else {
-      audioPlayer.current.srcObject = null;
+      if (audioPlayer.current) {
+        try {
+          audioPlayer.current.srcObject = null;
+        } catch (error) {
+          console.error("Error clearing audio source:", error);
+        }
+      }
     }
   }, [screenShareAudioStream, screenShareOn, isLocal]);
 
