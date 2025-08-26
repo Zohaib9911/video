@@ -20,6 +20,11 @@ function App() {
   const isMobile = window.matchMedia(
     "only screen and (max-width: 768px)"
   ).matches;
+  // Set micOn and webcamOn to false by default on initial load
+  useEffect(() => {
+    setMicOn(false);
+    setWebcamOn(false);
+  }, []);
 
   useEffect(() => {
     if (isMobile) {

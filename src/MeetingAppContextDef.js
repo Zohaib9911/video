@@ -5,14 +5,21 @@ export const MeetingAppContext = createContext();
 export const useMeetingAppContext = () => useContext(MeetingAppContext);
 
 export const MeetingAppProvider = ({ children }) => {
-  const [selectedMic, setSelectedMic] = useState({ id: null, label: null });
-  const [selectedWebcam, setSelectedWebcam] = useState({ id: null, label: null });
+  // Ensure mic and webcam are OFF by default on initial render
+  const [selectedMic, setSelectedMic] = useState({ id: null, label: null, enabled: false });
+  const [selectedWebcam, setSelectedWebcam] = useState({ id: null, label: null, enabled: false });
   const [selectedSpeaker, setSelectedSpeaker] = useState({ id: null, label: null });
   const [isCameraPermissionAllowed, setIsCameraPermissionAllowed] = useState(null);
   const [isMicrophonePermissionAllowed, setIsMicrophonePermissionAllowed] = useState(null);
   const [raisedHandsParticipants, setRaisedHandsParticipants] = useState([]);
   const [sideBarMode, setSideBarMode] = useState(null);
   const [pipMode, setPipMode] = useState(false);
+
+  // Optionally, if you want to ensure that any legacy state or side effects don't turn on mic/webcam, you can use useEffect:
+  useEffect(() => {
+    setSelectedMic((prev) => ({ ...prev, enabled: false }));
+    setSelectedWebcam((prev) => ({ ...prev, enabled: false }));
+  }, []);
 
   const useRaisedHandParticipants = () => {
     const raisedHandsParticipantsRef = useRef();

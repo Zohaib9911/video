@@ -1,0 +1,50 @@
+server {
+    # Listen for traffic on the main door (port 80 for HTTP)
+    # Tell the host which website name to listen for.
+    # Use your server's PUBLIC IP address if you don't have a domain name yet.
+    server_name deployvalley.com www.deployvalley.com;
+
+    # The most important rule: What to do when someone arrives?
+    location / {
+        # Rule: "Take all traffic and forward it to the waiter
+        # who is working at table number 3000 inside the building."
+        proxy_pass http://localhost:3000;
+
+        # These next lines are just important technical details
+        # to make sure the forwarded traffic has all the right information.
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+
+    listen 443 ssl; # managed by Certbot
+    ssl_certificate /etc/letsencrypt/live/deployvalley.com/fullchain.pem; # managed by Certbot
+    ssl_certificate_key /etc/letsencrypt/live/deployvalley.com/privkey.pem; # managed by Certbot
+    include /etc/letsencrypt/options-ssl-nginx.conf; # managed by Certbot
+    ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem; # managed by Certbot
+
+
+}
+server {
+    if ($host = www.deployvalley.com) {
+        return 301 https://$host$request_uri;
+    } # managed by Certbot
+
+
+    if ($host = deployvalley.com) {
+        return 301 https://$host$request_uri;
+    } # managed by Certbot
+
+
+    listen 80;
+    server_name deployvalley.com www.deployvalley.com;
+    return 404; # managed by Certbot
+
+
+
+
+}
